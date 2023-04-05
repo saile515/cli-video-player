@@ -44,23 +44,14 @@ int main(int argc, char** argv)
     struct winsize w;
     ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
     int window_width = std::floor(w.ws_col / 2);
-    int window_height = w.ws_row;
+    int window_height = w.ws_row - 1;
 
     double fps = video.get(5);
     int frame_count = video.get(7);
 
     std::chrono::time_point last_frame = std::chrono::high_resolution_clock::now();
-    std::string frame_buffer[5];
 
     while (video.isOpened()) {
-        if (frame_buffer[0] != "") {
-            std::cout << frame_buffer[0] << std::flush;
-        }
-        frame_buffer[0] = frame_buffer[1];
-        frame_buffer[1] = frame_buffer[2];
-        frame_buffer[2] = frame_buffer[3];
-        frame_buffer[3] = frame_buffer[4];
-
         cv::Mat frame;
         int frame_width = frame.cols;
         int frame_height = frame.rows;
@@ -69,7 +60,7 @@ int main(int argc, char** argv)
         cv::resize(frame, frame, cv::Size(window_width, window_height));
 
         if (isSuccess == true) {
-            std::string out = "";
+            std::string out = "\033[1;1H";
             for (int y = 0; y < window_height; ++y) {
                 for (int x = 0; x < window_width; ++x) {
                     auto pixel = frame.at<cv::Vec3b>(y, x);
@@ -77,7 +68,8 @@ int main(int argc, char** argv)
                 }
                 out += "\n";
             }
-            frame_buffer[4] = out;
+
+            write(1, out.c_str(), out.size());
         }
 
         if (isSuccess == false) {
